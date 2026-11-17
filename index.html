@@ -6,23 +6,89 @@
     <title>Professional Link Shortener & Tracker</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f172a; color: #f8fafc; margin: 0; padding: 20px; }
-        .container { max-width: 900px; margin: 30px auto; background: #1e293b; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
-        h1 { color: #38bdf8; margin-top: 0; font-size: 24px; text-align: center; }
-        .creator-box { background: #334155; padding: 20px; border-radius: 8px; margin-bottom: 25px; display: flex; gap: 10px; flex-wrap: wrap; }
-        .creator-box input { flex: 1; padding: 12px; border-radius: 6px; border: 1px solid #475569; background: #0f172a; color: #fff; font-size: 14px; min-width: 200px; }
-        .creator-box button { background: #4ade80; color: #0f172a; border: none; padding: 12px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 14px; }
-        .creator-box button:hover { background: #22c55e; }
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 25px; }
-        .card { background: #334155; padding: 15px; border-radius: 8px; text-align: center; }
-        .card h3 { margin: 0; font-size: 14px; color: #94a3b8; }
-        .card p { margin: 10px 0 0; font-size: 28px; font-weight: bold; color: #4ade80; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%); 
+            color: #f8fafc; 
+            margin: 0; 
+            padding: 20px; 
+            min-height: 100vh;
+        }
+        .container { 
+            max-width: 900px; 
+            margin: 30px auto; 
+            background: rgba(30, 41, 59, 0.85); 
+            backdrop-filter: blur(12px);
+            padding: 30px; 
+            border-radius: 16px; 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        h1 { color: #38bdf8; margin-top: 0; font-size: 26px; text-align: center; text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+        .creator-box { 
+            background: rgba(51, 65, 85, 0.7); 
+            padding: 20px; 
+            border-radius: 12px; 
+            margin-bottom: 25px; 
+            display: flex; 
+            gap: 12px; 
+            flex-wrap: wrap; 
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+        }
+        .creator-box input { 
+            flex: 1; 
+            padding: 14px; 
+            border-radius: 8px; 
+            border: 1px solid #475569; 
+            background: #0f172a; 
+            color: #fff; 
+            font-size: 15px; 
+            min-width: 220px; 
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        .creator-box input:focus { border-color: #38bdf8; }
+        .creator-box button { 
+            background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%); 
+            color: #0f172a; 
+            border: none; 
+            padding: 14px 24px; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            font-size: 15px; 
+            box-shadow: 0 4px 12px rgba(74, 222, 128, 0.3);
+            transition: transform 0.2s, filter 0.2s;
+        }
+        .creator-box button:hover { transform: translateY(-2px); filter: brightness(1.1); }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 20px; margin-bottom: 25px; }
+        .card { 
+            background: rgba(51, 65, 85, 0.6); 
+            padding: 20px; 
+            border-radius: 12px; 
+            text-align: center; 
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,255,255,0.03);
+        }
+        .card h3 { margin: 0; font-size: 14px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
+        .card p { margin: 10px 0 0; font-size: 32px; font-weight: bold; color: #4ade80; text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+        .chart-container { background: rgba(15, 23, 42, 0.6); padding: 20px; border-radius: 12px; margin-bottom: 25px; box-shadow: inset 0 2px 6px rgba(0,0,0,0.4); }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #334155; word-break: break-all; }
-        th { color: #38bdf8; font-size: 14px; }
+        th, td { padding: 14px; text-align: left; border-bottom: 1px solid #334155; word-break: break-all; }
+        th { color: #38bdf8; font-size: 14px; background: rgba(30, 41, 59, 0.5); }
         td { font-size: 13px; }
-        .copy-btn { background: #38bdf8; color: #0f172a; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        .copy-btn:hover { background: #7dd3fc; }
+        tr:hover { background: rgba(255, 255, 255, 0.02); }
+        .copy-btn { 
+            background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%); 
+            color: #0f172a; 
+            border: none; 
+            padding: 8px 14px; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            box-shadow: 0 2px 6px rgba(56, 189, 248, 0.3);
+        }
+        .copy-btn:hover { filter: brightness(1.1); }
         #loader { text-align: center; margin-top: 100px; display: none; }
     </style>
     <script>
@@ -63,7 +129,7 @@
     </div>
 
     <div class="container" id="dashboard" style="display: none;">
-        <h1>🚀 Global Link Shortener & Tracker</h1>
+        <h1>🚀 Professional 3D Link Shortener & Tracker</h1>
         
         <div class="creator-box">
             <input type="url" id="targetUrlInput" placeholder="Paste your long URL here (e.g. https://example.com)...">
@@ -71,9 +137,11 @@
         </div>
 
         <div class="stats-grid" id="statsCards"></div>
-        <div style="background: #0f172a; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-            <canvas id="clicksChart" height="100"></canvas>
+        
+        <div class="chart-container">
+            <canvas id="clicksChart" height="90"></canvas>
         </div>
+        
         <table>
             <thead>
                 <tr>
@@ -96,7 +164,21 @@
             document.getElementById('loader').style.display = 'block';
         }
 
+        // ہر یوزر کے اپنے براؤزر کی پرائیویٹ لسٹ حاصل کرنا
+        function getMyCodes() {
+            return JSON.parse(localStorage.getItem('my_short_codes') || '[]');
+        }
+
+        function saveMyCode(code) {
+            let myCodes = getMyCodes();
+            if (!myCodes.includes(code)) {
+                myCodes.push(code);
+                localStorage.setItem('my_short_codes', JSON.stringify(myCodes));
+            }
+        }
+
         async function loadAnalytics() {
+            let myCodes = getMyCodes();
             let linksData = {};
             let clickData = {};
             
@@ -105,8 +187,15 @@
                     fetch(`${FIREBASE_URL}/links.json`),
                     fetch(`${FIREBASE_URL}/clicks.json`)
                 ]);
-                linksData = (await linksRes.json()) || {};
+                const allLinks = (await linksRes.json()) || {};
                 clickData = (await clicksRes.json()) || {};
+
+                // صرف اس یوزر کے اپنے بنائے ہوئے لنکس فلٹر کرنا جو اس کے براؤزر میں محفوظ ہیں
+                myCodes.forEach(c => {
+                    if (allLinks[c]) {
+                        linksData[c] = allLinks[c];
+                    }
+                });
             } catch (e) {
                 console.error("Database error");
             }
@@ -117,6 +206,10 @@
             const tableBody = document.getElementById('linksTable');
             tableBody.innerHTML = "";
             const baseUrl = window.location.origin + window.location.pathname;
+
+            if (Object.keys(linksData).length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#94a3b8;">No links created from this device yet. Paste a URL above to create one!</td></tr>`;
+            }
 
             for (const [key, targetUrl] of Object.entries(linksData)) {
                 const count = clickData[key] || 0;
@@ -137,8 +230,8 @@
             }
 
             document.getElementById('statsCards').innerHTML = `
-                <div class="card"><h3>Total Links</h3><p>${Object.keys(linksData).length}</p></div>
-                <div class="card"><h3>Total Clicks</h3><p>${totalAllClicks}</p></div>
+                <div class="card"><h3>My Links</h3><p>${Object.keys(linksData).length}</p></div>
+                <div class="card"><h3>My Total Clicks</h3><p>${totalAllClicks}</p></div>
             `;
 
             if (window.myChart) {
@@ -147,8 +240,8 @@
 
             window.myChart = new Chart(document.getElementById('clicksChart').getContext('2d'), {
                 type: 'bar',
-                data: { labels: labels, datasets: [{ label: 'Clicks', data: counts, backgroundColor: '#38bdf8', borderRadius: 6 }] },
-                options: { responsive: true, scales: { y: { beginAtZero: true, ticks: { color: '#94a3b8', stepSize: 1 }, grid: { color: '#334155' } }, x: { ticks: { color: '#94a3b8' }, grid: { display: false } } }, plugins: { legend: { labels: { color: '#f8fafc' } } } }
+                data: { labels: labels, datasets: [{ label: 'Clicks on My Links', data: counts, backgroundColor: '#38bdf8', borderRadius: 6 }] },
+                options: { responsive: true, scales: { y: { beginAtZero: true, ticks: { color: '#94a3b8', stepSize: 1 }, grid: { color: 'rgba(51, 65, 85, 0.4)' } }, x: { ticks: { color: '#94a3b8' }, grid: { display: false } } }, plugins: { legend: { labels: { color: '#f8fafc' } } } }
             });
         }
 
@@ -173,6 +266,9 @@
                 if (!response.ok) {
                     throw new Error("Firebase permission denied");
                 }
+
+                // اس کوڈ کو اس یوزر کے اپنے براؤزر میں سیو کرنا
+                saveMyCode(randomCode);
 
                 document.getElementById('targetUrlInput').value = "";
                 alert("Success! Link created.");
