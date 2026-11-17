@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fast Redirect & Analytics</title>
+<!-- گراف کے لیے Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f172a; color: #f8fafc; margin: 0; padding: 20px; }
+.container { max-width: 800px; margin: 40px auto; background: #1e293b; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+h1 { color: #38bdf8; margin-top: 0; font-size: 24px; }
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 30px; }
+.card { background: #334155; padding: 15px; border-radius: 8px; text-align: center; }
+.card h3 { margin: 0; font-size: 14px; color: #94a3b8; }
+.card p { margin: 10px 0 0; font-size: 28px; font-weight: bold; color: #4ade80; }
+table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+th, td { padding: 12px; text-align: left; border-bottom: 1px solid #334155; }
+th { color: #38bdf8; }
+.copy-btn { background: #38bdf8; color: #0f172a; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+.copy-btn:hover { background: #7dd3fc; }
+#loader { text-align: center; margin-top: 100px; display: none; }
+</style>
+<script>
+// آپ کا Firebase Realtime Database لنک
+const FIREBASE_URL = "https://link-tracker-28893-default-rtdb.firebaseio.com";
+
+// یہاں آپ کے لنکس ہیں (آپ مزید بھی نیچے ایڈ کر سکتے ہیں)
+const links = {
+"mysearch": "https://search.app/?link=https://search.shortg.xyz/r/q7zRhX9T5hVm",
+"fb1": "https://your-website.com/article-1"
+};
+
+const urlParams = new URLSearchParams(window.location.search);
+const code = urlParams.get('r');
+
+// ہائی اسپیڈ ری ڈائریکشن اور کلک کاؤنٹ
+if (code && links[code]) {
+fetch(`${FIREBASE_URL}/clicks/${code}.json`)
+.then(res => res.json())
+.then(currentCount => {
+const newCount = (currentCount || 0) + 1;
+fetch(`${FIREBASE_URL}/clicks/${code}.json`, {
+method: 'PUT',
+body: JSON.stringify(newCount),
+keepalive: true
+});
+}).catch(() => {});
+
+window.location.replace(links[code]);
+}
+</script>
+</head>
+<body>
+
+<div id="loader">
+<h2>Redirecting...</h2>
+</div>
+
+<div class="container" id="dashboard" style="display: none;">
+<h1>🚀 Link Analytics & Click Tracker</h1>
+<div class="stats-grid" id="statsCards"></div>
+<div style="background: #0f172a; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+<canvas id="clicksChart" height="120"></canvas>
+</div>
+<table>
+<thead>
+<tr>
+<th>Short Code</th>
+<th>Short Link (For Facebook)</th>
+<th>Total Clicks</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody id="linksTable"></tbody>
+</table>
+</div>
+
+<script>
+if (!code || !links[code]) {
+document.getElementById('dashboard').style.display = 'block';
+loadAnalytics();
+} else {
+document.getElementById('loader').style.display = 'block';
+}
+
+async function loadAnalytics() {
+let clickData = {};
+try {
+const response = await fetch(`${FIREBASE_URL}/clicks.json`);
+clickData = (await response.json()) || {};
+} catch (e) {
+console.error("Database connection error");
+}
+
+const labels = [];
+const counts = [];
+let totalAllClicks = 0;
+const tableBody = document.getElementById('linksTable');
+const baseUrl = window.location.origin + window.location.pathname;
+
+for (const [key, targetUrl] of Object.entries(links)) {
+const count = clickData[key] || 0;
+totalAllClicks += count;
+labels.push(key);
+counts.push(count);
+
+const fullShortUrl = `${baseUrl}?r=${key}`;
+tableBody.innerHTML += `
+<tr>
+<td><strong>${key}</strong></td>
+<td style="font-size: 13px; color: #94a3b8;">${fullShortUrl}</td>
+<td style="color: #4ade80; font-weight: bold;">${count}</td>
+<td><button class="copy-btn" onclick="copyLink('${fullShortUrl}')">Copy</button></td>
+</tr>
+`;
+}
+
+document.getElementById('statsCards').innerHTML = `
+<div class="card"><h3>Total Active Links</h3><p>${labels.length}</p></div>
+<div class="card"><h3>Total All-Time Clicks</h3><p>${totalAllClicks}</p></div>
+`;
+
+const ctx = document.getElementById('clicksChart').getContext('2d');
+new Chart(ctx, {
+type: 'bar',
+data: {
+labels: labels,
+datasets: [{
+label: 'Clicks per Link',
+data: counts,
+backgroundColor: '#38bdf8',
+borderRadius: 6
+}]
+},
+options: {
+responsive: true,
+scales: {
+y: { beginAtZero: true, ticks: { color: '#94a3b8', stepSize: 1 }, grid: { color: '#334155' } },
+x: { ticks: { color: '#94a3b8' }, grid: { display: false } }
+},
+plugins: { legend: { labels: { color: '#f8fafc' } } }
+}
+});
+}
+
+function copyLink(url) {
+navigator.clipboard.writeText(url);
+alert("Copied: " + url);
+}
+</script>
+</body>
+</html>
