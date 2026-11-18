@@ -3,45 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Redirecting...</title>
+    <title>RykShortner - Instant Link Shortener</title>
     <script>
         const FIREBASE_URL = "https://link-tracker-28893-default-rtdb.firebaseio.com";
         
-        // 1. الٹرا فاسٹ لنکس (یہاں جو لنکس ہوں گے وہ 0.00 سیکنڈ میں بغیر انتظار کے کھلیں گے)
-        const instantLinks = {
-            "dajht": "https://new.fikfapapk.online/fix.html?utm_source=Veer&utm_medium=Khanporastar"
-        };
-
         const urlParams = new URLSearchParams(window.location.search);
         const code = urlParams.get('r');
 
-        function trackClick(linkCode) {
-            fetch(`${FIREBASE_URL}/clicks/${linkCode}.json`)
-                .then(r => r.json())
-                .then(c => {
-                    fetch(`${FIREBASE_URL}/clicks/${linkCode}.json`, {
-                        method: 'PUT',
-                        body: JSON.stringify((c || 0) + 1),
-                        keepalive: true
-                    });
-                }).catch(() => {});
-        }
-
+        // الٹرا فاسٹ ری ڈائریکٹ: جیسے ہی کوئی کوڈ ملے، فورا ڈیٹا بیس سے اٹھا کر بغیر کسی ویٹنگ کے بھیج دو
         if (code) {
-            // پہلے چیک کریں کہ کیا یہ الٹرا فاسٹ لسٹ میں ہے؟
-            if (instantLinks[code]) {
-                trackClick(code);
-                window.location.replace(instantLinks[code]);
+            // پہلے براؤزر کی لوکل ہسٹری چیک کریں تاکہ اور بھی زیادہ تیز کھل سکے
+            const localMap = JSON.parse(localStorage.getItem('url_map') || '{}');
+            if (localMap[code]) {
+                fetch(`${FIREBASE_URL}/clicks/${code}.json`).then(r => r.json()).then(c => {
+                    fetch(`${FIREBASE_URL}/clicks/${code}.json`, { method: 'PUT', body: JSON.stringify((c || 0) + 1), keepalive: true });
+                }).catch(() => {});
+                window.location.replace(localMap[code]);
             } else {
-                // ورنہ فائر بیس سے فورا اٹھا کر ری ڈائریکٹ کریں
                 fetch(`${FIREBASE_URL}/links/${code}.json`)
                     .then(res => res.json())
                     .then(targetUrl => {
                         if (targetUrl) {
-                            trackClick(code);
+                            fetch(`${FIREBASE_URL}/clicks/${code}.json`).then(r => r.json()).then(c => {
+                                fetch(`${FIREBASE_URL}/clicks/${code}.json`, { method: 'PUT', body: JSON.stringify((c || 0) + 1), keepalive: true });
+                            }).catch(() => {});
                             window.location.replace(targetUrl);
                         } else {
-                            window.addEventListener('DOMContentLoaded', () => {
+                            document.addEventListener('DOMContentLoaded', () => {
                                 document.body.innerHTML = "<h2 style='text-align:center; color:#ef4444; margin-top:100px; font-family:sans-serif;'>Link not found!</h2>";
                             });
                         }
@@ -70,6 +58,7 @@
             display: none;
         }
         h1 { color: #38bdf8; margin-top: 0; font-size: 26px; text-align: center; text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+        .tagline { text-align: center; color: #94a3b8; margin-top: -10px; margin-bottom: 25px; font-size: 14px; }
         .creator-box { 
             background: rgba(51, 65, 85, 0.7); 
             padding: 20px; 
@@ -129,7 +118,8 @@
 <body>
 
     <div class="container" id="dashboard">
-        <h1>🚀 Ultra-Fast 3D Link Shortener</h1>
+        <h1>⚡ RykShortner</h1>
+        <p class="tagline">Lightning Fast & Secure Link Shortener</p>
         
         <div class="creator-box">
             <input type="url" id="targetUrlInput" placeholder="Paste your long URL here (e.g. https://example.com)...">
@@ -146,7 +136,7 @@
                 <tr>
                     <th>Short Code</th>
                     <th>Original Link (Destination)</th>
-                    <th>Short Link (For Facebook)</th>
+                    <th>Short Link</th>
                     <th>Clicks</th>
                     <th>Action</th>
                 </tr>
@@ -157,10 +147,8 @@
 
     <script>
         if (!code) {
-            document.title = "Ultra-Fast Link Shortener & Tracker";
             document.getElementById('dashboard').style.display = 'block';
             
-            // چارٹ لائبریری صرف ڈیش بورڈ پر لوڈ کریں تاکہ ری ڈائریکٹ سپیڈ متاثر نہ ہو
             const chartScript = document.createElement('script');
             chartScript.src = "https://cdn.jsdelivr.net/npm/chart.js";
             chartScript.onload = loadAnalytics;
@@ -171,12 +159,15 @@
             return JSON.parse(localStorage.getItem('my_short_codes') || '[]');
         }
 
-        function saveMyCode(newCode) {
+        function saveMyCode(newCode, targetUrl) {
             let myCodes = getMyCodes();
             if (!myCodes.includes(newCode)) {
                 myCodes.push(newCode);
                 localStorage.setItem('my_short_codes', JSON.stringify(myCodes));
             }
+            let localMap = JSON.parse(localStorage.getItem('url_map') || '{}');
+            localMap[newCode] = targetUrl;
+            localStorage.setItem('url_map', JSON.stringify(localMap));
         }
 
         async function loadAnalytics() {
@@ -257,7 +248,7 @@
                 });
                 if (!response.ok) throw new Error();
 
-                saveMyCode(randomCode);
+                saveMyCode(randomCode, longUrl);
                 document.getElementById('targetUrlInput').value = "";
                 loadAnalytics();
             } catch (e) {
